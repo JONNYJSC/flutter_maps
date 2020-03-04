@@ -7,6 +7,7 @@ import 'package:flutter_maps/api/nominatim.dart';
 import 'package:flutter_maps/models/reverse_result.dart';
 import 'package:flutter_maps/models/search_result.dart';
 import 'package:flutter_maps/pages/home/map_utils.dart';
+import 'package:flutter_maps/pages/home/widgets/my_center_position.dart';
 import 'package:flutter_maps/pages/home/widgets/toolbar.dart';
 import 'dart:typed_data';
 import 'dart:math' as math;
@@ -207,67 +208,49 @@ class _HomePageState extends State<HomePage> {
             ? Center(
                 child: CupertinoActivityIndicator(radius: 15),
               )
-            : Stack(
-                children: <Widget>[
-                  GoogleMap(
-                    initialCameraPosition: _initialCameraPosition,
-                    myLocationButtonEnabled: true,
-                    myLocationEnabled: true,
-                    // onTap: _onTap,
-                    markers: Set.of(_markers.values),
-                    polylines: Set.of(_polylines.values),
-                    onCameraMoveStarted: _onCameraMoveStarted,
-                    onCameraMove: _onCameraMove,
-                    onCameraIdle: _onCameraIdle,
-                    onMapCreated: (GoogleMapController controller) {
-                      _mapController = controller;
-                      _mapController.setMapStyle(jsonEncode(mapStyle));
-                    },
-                  ),
-                  Toolbar(
-                    onSearch: (SearchResult result) {
-                      _moveCamera(result.position, zoom: 15);
-                    },
-                  ),
-                  Positioned(
-                    top: 500,
-                    left: 0,
-                    right: 0,
-                    child: Column(
-                      children: <Widget>[
-                        ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: 350),
-                          child: Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 15, vertical: 5),
-                              child: _reverseResult != null
-                                  ? Text(
-                                      _reverseResult.displayName,
-                                      textAlign: TextAlign.center,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(color: Colors.black),
-                                    )
-                                  : Icon(
-                                      Icons.data_usage,
-                                      color: Colors.white,
-                                    ),
-                              decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(20))),
-                        ),
-                        Container(
-                            width: 4,
-                            height: 15,
-                            decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.only(
-                                    bottomLeft: Radius.circular(4),
-                                    bottomRight: Radius.circular(4))))
-                      ],
+            : SafeArea(
+                child: Column(
+                  children: <Widget>[
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, constrains) {
+                          return Stack(
+                            children: <Widget>[
+                              GoogleMap(
+                                initialCameraPosition: _initialCameraPosition,
+                                myLocationButtonEnabled: true,
+                                myLocationEnabled: true,
+                                // onTap: _onTap,
+                                markers: Set.of(_markers.values),
+                                polylines: Set.of(_polylines.values),
+                                onCameraMoveStarted: _onCameraMoveStarted,
+                                onCameraMove: _onCameraMove,
+                                onCameraIdle: _onCameraIdle,
+                                onMapCreated: (GoogleMapController controller) {
+                                  _mapController = controller;
+                                  _mapController
+                                      .setMapStyle(jsonEncode(mapStyle));
+                                },
+                              ),
+                              Toolbar(
+                                onSearch: (SearchResult result) {
+                                  _moveCamera(result.position, zoom: 15);
+                                },
+                              ),
+                              MyCenterPosition(
+                                reverseResult: _reverseResult,
+                                containerHeight: constrains.maxHeight,
+                              )
+                            ],
+                          );
+                        },
+                      ),
                     ),
-                  )
-                ],
+                    Container(
+                      height: 150,
+                    )
+                  ],
+                ),
               ),
       ),
     );
