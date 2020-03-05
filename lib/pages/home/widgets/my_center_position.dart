@@ -20,32 +20,29 @@ class MyCenterPosition extends StatelessWidget {
       right: 0,
       child: Column(
         children: <Widget>[
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: 300),
-            child: Container(
-                height: height,
-                width: reverseResult == null ? height : double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: 15),
-                child: Center(
-                  child: reverseResult != null
-                      ? Text(
-                          reverseResult.displayName,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              color: Colors.black,
-                              fontSize: responsive.ip(1.4)),
-                        )
-                      : SpinKitRotatingCircle(
-                          color: Colors.black,
-                          size: 50.0,
-                        ),
-                ),
-                decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20))),
-          ),
+          AnimatedContainer(
+              duration: Duration(milliseconds: 500),
+              height: height,
+              width: reverseResult == null ? height : 300,
+              padding: EdgeInsets.symmetric(horizontal: 15),
+              child: Center(
+                child: reverseResult != null
+                    ? Text(
+                        reverseResult.displayName,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            color: Colors.black, fontSize: responsive.ip(1.4)),
+                      )
+                    : SpinKitRotatingCircle(
+                        color: Colors.black,
+                        size: 20.0,
+                      ),
+              ),
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20))),
           Container(
               width: 4,
               height: 15,

@@ -37,7 +37,7 @@ class _HomePageState extends State<HomePage> {
   Map<PolylineId, Polyline> _polylines = Map();
 
   var _isCameraMoving = false;
-  LatLng _centerposition;
+  LatLng _centerposition, _myPosition;
   ReverseResult _reverseResult;
 
   // List<LatLng> _myRoute = List();
@@ -77,6 +77,9 @@ class _HomePageState extends State<HomePage> {
   _onLocationUpdate(Position position) {
     if (position != null) {
       final myposition = LatLng(position.latitude, position.longitude);
+
+      _myPosition = myposition;
+
       if (_initialCameraPosition == null) {
         setState(() {
           _initialCameraPosition = CameraPosition(target: myposition, zoom: 14);
@@ -218,7 +221,7 @@ class _HomePageState extends State<HomePage> {
                             children: <Widget>[
                               GoogleMap(
                                 initialCameraPosition: _initialCameraPosition,
-                                myLocationButtonEnabled: true,
+                                myLocationButtonEnabled: false,
                                 myLocationEnabled: true,
                                 // onTap: _onTap,
                                 markers: Set.of(_markers.values),
@@ -235,6 +238,11 @@ class _HomePageState extends State<HomePage> {
                               Toolbar(
                                 onSearch: (SearchResult result) {
                                   _moveCamera(result.position, zoom: 15);
+                                },
+                                onGoMyPosition: () {
+                                  if (_myPosition != null) {
+                                    _moveCamera(_myPosition, zoom: 15);
+                                  }
                                 },
                               ),
                               MyCenterPosition(
