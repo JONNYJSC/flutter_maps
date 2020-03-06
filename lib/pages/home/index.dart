@@ -35,6 +35,7 @@ class _HomePageState extends State<HomePage> {
   StreamSubscription<Position> _positionStream;
   Map<MarkerId, Marker> _markers = Map();
   Map<PolylineId, Polyline> _polylines = Map();
+  Map<PolygonId, Polygon> _polygons = Map();
 
   var _isCameraMoving = false;
   LatLng _centerposition, _myPosition;
@@ -201,6 +202,31 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  _onSearch(SearchResult result) {
+    _moveCamera(result.position, zoom: 16);
+
+    if (result.polygon.length > 0) {
+      final polygonId = PolygonId(result.displayName);
+      final polygon = Polygon(
+          polygonId: polygonId,
+          points: result.polygon,
+          strokeWidth: 1,
+          strokeColor: Colors.white,
+          fillColor: Colors.cyan.withOpacity(0.2));
+      setState(() {
+        _polygons[polygon.polygonId] = polygon;
+      });
+    } else {
+      print("No hay polygon");
+    }
+  }
+
+  _onGoMyPosition() {
+    if (_myPosition != null) {
+      _moveCamera(_myPosition, zoom: 15);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -226,6 +252,7 @@ class _HomePageState extends State<HomePage> {
                                 // onTap: _onTap,
                                 markers: Set.of(_markers.values),
                                 polylines: Set.of(_polylines.values),
+                                polygons: Set.of(_polygons.values),
                                 onCameraMoveStarted: _onCameraMoveStarted,
                                 onCameraMove: _onCameraMove,
                                 onCameraIdle: _onCameraIdle,
@@ -235,27 +262,21 @@ class _HomePageState extends State<HomePage> {
                                       .setMapStyle(jsonEncode(mapStyle));
                                 },
                               ),
-                              Toolbar(
-                                onSearch: (SearchResult result) {
-                                  _moveCamera(result.position, zoom: 15);
-                                },
-                                onGoMyPosition: () {
-                                  if (_myPosition != null) {
-                                    _moveCamera(_myPosition, zoom: 15);
-                                  }
-                                },
-                              ),
                               MyCenterPosition(
                                 reverseResult: _reverseResult,
                                 containerHeight: constrains.maxHeight,
-                              )
+                              ),
+                              Toolbar(
+                                onSearch: _onSearch,
+                                onGoMyPosition: _onGoMyPosition,
+                              ),
                             ],
                           );
                         },
                       ),
                     ),
                     Container(
-                      height: 150,
+                      height: 50,
                     )
                   ],
                 ),
