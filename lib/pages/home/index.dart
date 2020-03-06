@@ -13,6 +13,7 @@ import 'dart:typed_data';
 import 'dart:math' as math;
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -22,6 +23,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   Nominatim _nominatim = Nominatim();
 
+  PanelController _panelController = PanelController();
   GoogleMapController _mapController;
   // Uint8List _carPin;
   // Marker _myMarker;
@@ -37,7 +39,7 @@ class _HomePageState extends State<HomePage> {
   Map<PolylineId, Polyline> _polylines = Map();
   Map<PolygonId, Polygon> _polygons = Map();
 
-  var _isCameraMoving = false;
+  var _isPanelOpen = false;
   LatLng _centerposition, _myPosition;
   ReverseResult _reverseResult;
 
@@ -183,7 +185,7 @@ class _HomePageState extends State<HomePage> {
   _onCameraMoveStarted() {
     print('Move Started');
     setState(() {
-      _isCameraMoving = true;
+      // _isCameraMoving = true;
       _reverseResult = null;
     });
   }
@@ -197,9 +199,9 @@ class _HomePageState extends State<HomePage> {
   _onCameraIdle() {
     print('Move fnished');
     _nominatim.reverse(_centerposition);
-    setState(() {
-      _isCameraMoving = false;
-    });
+    // setState(() {
+    //   _isCameraMoving = false;
+    // });
   }
 
   _onSearch(SearchResult result) {
@@ -229,7 +231,12 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final padding = MediaQuery.of(context).padding;
+    final slidingUpPanelHeight = size.height - padding.top - padding.bottom;
+
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -238,47 +245,95 @@ class _HomePageState extends State<HomePage> {
                 child: CupertinoActivityIndicator(radius: 15),
               )
             : SafeArea(
-                child: Column(
-                  children: <Widget>[
-                    Expanded(
-                      child: LayoutBuilder(
-                        builder: (context, constrains) {
-                          return Stack(
-                            children: <Widget>[
-                              GoogleMap(
-                                initialCameraPosition: _initialCameraPosition,
-                                myLocationButtonEnabled: false,
-                                myLocationEnabled: true,
-                                // onTap: _onTap,
-                                markers: Set.of(_markers.values),
-                                polylines: Set.of(_polylines.values),
-                                polygons: Set.of(_polygons.values),
-                                onCameraMoveStarted: _onCameraMoveStarted,
-                                onCameraMove: _onCameraMove,
-                                onCameraIdle: _onCameraIdle,
-                                onMapCreated: (GoogleMapController controller) {
-                                  _mapController = controller;
-                                  _mapController
-                                      .setMapStyle(jsonEncode(mapStyle));
+                child: SlidingUpPanel(
+                  controller: _panelController,
+                  onPanelOpened: () {
+                    setState(() {
+                      _isPanelOpen = true;
+                    });
+                  },
+                  onPanelClosed: () {
+                    setState(() {
+                      _isPanelOpen = false;
+                    });
+                  },
+                  maxHeight: slidingUpPanelHeight,
+                  backdropEnabled: true,
+                  backdropOpacity: 0.2,
+                  body: LayoutBuilder(
+                    builder: (context, constrains) {
+                      return Stack(
+                        children: <Widget>[
+                          GoogleMap(
+                            initialCameraPosition: _initialCameraPosition,
+                            myLocationButtonEnabled: false,
+                            myLocationEnabled: true,
+                            // onTap: _onTap,
+                            markers: Set.of(_markers.values),
+                            polylines: Set.of(_polylines.values),
+                            polygons: Set.of(_polygons.values),
+                            onCameraMoveStarted: _onCameraMoveStarted,
+                            onCameraMove: _onCameraMove,
+                            onCameraIdle: _onCameraIdle,
+                            onMapCreated: (GoogleMapController controller) {
+                              _mapController = controller;
+                              // _mapController
+                              //     .setMapStyle(jsonEncode(mapStyle));
+                            },
+                          ),
+                          MyCenterPosition(
+                            reverseResult: _reverseResult,
+                            containerHeight: constrains.maxHeight,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  panel: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      _isPanelOpen
+                          ? Toolbar(
+                              onSearch: _onSearch,
+                              onGoMyPosition: _onGoMyPosition,
+                              containerHeight: slidingUpPanelHeight,
+                              onClear: (){
+                                _panelController.close();
+                              },
+                            )
+                          : Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.all(15),
+                              child: CupertinoButton(
+                                onPressed: () {
+                                  _panelController.open();
                                 },
+                                color: Color(0xfff0f0f0),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 15),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: <Widget>[
+                                    Text(
+                                      'A donde quieres ir?',
+                                      textAlign: TextAlign.left,
+                                      style: TextStyle(
+                                          color: Colors.black54,
+                                          fontSize: 19,
+                                          letterSpacing: 1),
+                                    ),
+                                    Icon(
+                                      Icons.search,
+                                      color: Colors.black54,
+                                      size: 30,
+                                    )
+                                  ],
+                                ),
                               ),
-                              MyCenterPosition(
-                                reverseResult: _reverseResult,
-                                containerHeight: constrains.maxHeight,
-                              ),
-                              Toolbar(
-                                onSearch: _onSearch,
-                                onGoMyPosition: _onGoMyPosition,
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                    Container(
-                      height: 50,
-                    )
-                  ],
+                            )
+                    ],
+                  ),
                 ),
               ),
       ),

@@ -5,10 +5,12 @@ import 'package:flutter_maps/models/search_result.dart';
 
 class Toolbar extends StatefulWidget {
   //Para busqueda de lugares
+  final double containerHeight;
   final Function(SearchResult) onSearch;
-  final VoidCallback onGoMyPosition;
+  final VoidCallback onGoMyPosition, onClear;
 
-  const Toolbar({Key key, @required this.onSearch, this.onGoMyPosition}) : super(key: key);
+  const Toolbar({Key key, @required this.onSearch, this.onGoMyPosition, this.containerHeight, this.onClear})
+      : super(key: key);
 
   @override
   _ToolbarState createState() => _ToolbarState();
@@ -56,46 +58,28 @@ class _ToolbarState extends State<Toolbar> {
       _items.clear();
     });
     _textEditingController.clear();
+    widget.onClear();
   }
 
   @override
   Widget build(BuildContext context) {
     final isNotEmpty = _query.trim().length > 0;
-    return Positioned(
-      left: 10,
-      right: 10,
-      top: 10,
-      bottom: 10,
-      child: SafeArea(
-          child: Column(
+    return Container(
+      height: widget.containerHeight,
+      padding: EdgeInsets.all(15),
+      child: Column(
         children: <Widget>[
-          Container(
-            // height: 50,
-            decoration: BoxDecoration(
-                color: Colors.white, borderRadius: BorderRadius.circular(25)),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Expanded(
-                    child: CupertinoTextField(
-                  controller: _textEditingController,
-                  placeholder: "Search ...",
-                  onChanged: _onChanged,
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  style: TextStyle(color: Colors.black),
-                  decoration: BoxDecoration(color: Colors.transparent),
-                  suffix: isNotEmpty
-                      ? CupertinoButton(
-                          onPressed: _clear, child: Icon(Icons.clear))
-                      : null,
-                )),
-                CupertinoButton(
-                    padding: EdgeInsets.all(10),
-                    child: Icon(Icons.gps_fixed, color: Colors.blue),
-                    onPressed: widget.onGoMyPosition)
-              ],
+          CupertinoTextField(
+              controller: _textEditingController,
+              placeholder: "Buscar lugar o establecimiento ...",
+              onChanged: _onChanged,
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+              style: TextStyle(color: Colors.black54, letterSpacing: 1),
+              decoration: BoxDecoration(color: Color(0xfff0f0f0)),
+              suffix: isNotEmpty
+                  ? CupertinoButton(onPressed: _clear, child: Icon(Icons.clear))
+                  : null,
             ),
-          ),
           SizedBox(
             height: 10,
           ),
@@ -106,26 +90,34 @@ class _ToolbarState extends State<Toolbar> {
                       itemCount: _items.length,
                       itemBuilder: (context, index) {
                         final item = _items[index];
-                        return CupertinoButton(
-                          onPressed: () {
-                            widget.onSearch(item);
-                            _clear();
-                          },
-                          child: Text(
-                            item.displayName,
-                            style: TextStyle(color: Colors.black, fontSize: 15),
-                          ),
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            CupertinoButton(
+                              onPressed: () {
+                                widget.onSearch(item);
+                                _clear();
+                              },
+                              child: Text(
+                                item.displayName,
+                                style: TextStyle(color: Colors.black54, fontSize: 15),
+                              ),
+                              padding: EdgeInsets.symmetric(vertical: 15),
+                            ),
+                            Container(
+                              height: 1,
+                              color: Color(0xffcccccc),
+                            )
+                          ],
                         );
                       },
                     ),
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10)),
+                    
                   ),
                 )
               : Container()
         ],
-      )),
+      ),
     );
   }
 }

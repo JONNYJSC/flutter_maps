@@ -23,8 +23,8 @@ class MyCenterPosition extends StatelessWidget {
           AnimatedContainer(
               duration: Duration(milliseconds: 500),
               height: height,
-              width: reverseResult == null ? height : 300,
-              padding: EdgeInsets.symmetric(horizontal: 15),
+              width: reverseResult == null ? height : 250,
+              padding: EdgeInsets.symmetric(horizontal: 10),
               child: Center(
                 child: reverseResult != null
                     ? Text(
@@ -36,13 +36,13 @@ class MyCenterPosition extends StatelessWidget {
                             color: Colors.black, fontSize: responsive.ip(1.4)),
                       )
                     : SpinKitRotatingCircle(
-                        color: Colors.black,
+                        color: Colors.black45,
                         size: 20.0,
                       ),
               ),
               decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(20))),
+                  borderRadius: BorderRadius.circular(4))),
           Container(
               width: 4,
               height: 15,
