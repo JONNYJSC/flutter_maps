@@ -20,23 +20,25 @@ class _SplashPageState extends State<SplashPage> with WidgetsBindingObserver {
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) { 
-    print('state = $state');
-    if(state == AppLifecycleState.resumed) {
-      _check();
-    }    
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   @override
-  void dispose() { 
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();    
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    print('state = $state');
+    if(state==AppLifecycleState.resumed){
+      _check();
+    }
   }
 
+
+
   _check() async {
-    final sataus = await _permissionHandler
+    final status = await _permissionHandler
         .checkPermissionStatus(PermissionGroup.locationWhenInUse);
-    if (sataus == PermissionStatus.granted) {
+    if (status == PermissionStatus.granted) {
       Navigator.pushReplacementNamed(context, 'home');
     } else {
       setState(() {
@@ -53,9 +55,9 @@ class _SplashPageState extends State<SplashPage> with WidgetsBindingObserver {
       if (status ==
           PermissionStatus.granted) {
         Navigator.pushReplacementNamed(context, 'home');
-      } else if(status==PermissionStatus.denied){
-       final result = await _permissionHandler.openAppSettings();
-       print('result $result');
+      }else if(status==PermissionStatus.denied){
+       final result= await _permissionHandler.openAppSettings();
+       print("result $result");
       }
     }
   }
@@ -75,7 +77,7 @@ class _SplashPageState extends State<SplashPage> with WidgetsBindingObserver {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   Text(
-                    'MISSING PERMISSION',
+                    "MISSING PERMISSION",
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 19,
@@ -83,10 +85,10 @@ class _SplashPageState extends State<SplashPage> with WidgetsBindingObserver {
                   ),
                   SizedBox(height: 10),
                   CupertinoButton(
-                    child: Text('ALLOW'),
-                    borderRadius: BorderRadius.circular(30),
                     onPressed: _request,
+                    borderRadius: BorderRadius.circular(30),
                     color: Colors.blue,
+                    child: Text("ALLOW"),
                   )
                 ],
               ),

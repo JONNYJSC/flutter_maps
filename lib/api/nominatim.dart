@@ -11,7 +11,6 @@ import 'package:flutter/services.dart';
 typedef OnSearch(List<SearchResult> items);
 typedef OnReverse(ReverseResult result);
 
-//https://nominatim.openstreetmap.org/search.php?q=Quicentro+Shopping&polygon_geojson=1&format=json
 class Nominatim {
   final apiHost = 'https://nominatim.openstreetmap.org';
   StreamSubscription _searchSub, _reverseSub;
@@ -21,8 +20,8 @@ class Nominatim {
   Future<void> search(String query) async {
     try {
       final url =
-          '$apiHost/search.php?q=${Uri.encodeFull(query)}&polygon_geojson=1&format=json';
-      //Si tengo una peticion nueva la cancela y crea un anueva peticion
+          "$apiHost/search.php?q=${Uri.encodeFull(query)}&polygon_geojson=1&format=json";
+
       _searchSub?.cancel();
       _searchSub = http.get(url).asStream().listen((response) {
         if (response.statusCode == 200 && onSearch != null) {
@@ -33,25 +32,25 @@ class Nominatim {
         }
       });
     } catch (e) {
-      print('search error: $e');
+      print("search error: $e");
     }
   }
 
   Future<void> reverse(LatLng position) async {
     try {
       final url =
-          '$apiHost/reverse?lat=${position.latitude}&lon=${position.longitude}&format=json';
-      //Si tengo una peticion nueva la cancela y crea una nueva peticion
+          "$apiHost/reverse?lat=${position.latitude}&lon=${position.longitude}&format=json";
+
       _reverseSub?.cancel();
       _reverseSub = http.get(url).asStream().listen((response) {
-        print('reverse ${response.statusCode}');
+        print("reverse ${response.statusCode}");
         if (response.statusCode == 200 && onReverse != null) {
           final parsed = jsonDecode(response.body);
           onReverse(ReverseResult.fromJson(parsed));
         }
       });
     } catch (e) {
-      print('reverse error: $e');
+      print("reverse error: $e");
     }
   }
 

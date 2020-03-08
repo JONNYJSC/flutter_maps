@@ -4,12 +4,16 @@ import 'package:flutter_maps/api/nominatim.dart';
 import 'package:flutter_maps/models/search_result.dart';
 
 class Toolbar extends StatefulWidget {
-  //Para busqueda de lugares
   final double containerHeight;
   final Function(SearchResult) onSearch;
   final VoidCallback onGoMyPosition, onClear;
 
-  const Toolbar({Key key, @required this.onSearch, this.onGoMyPosition, this.containerHeight, this.onClear})
+  const Toolbar(
+      {Key key,
+      @required this.onSearch,
+      this.onGoMyPosition,
+      this.containerHeight,
+      this.onClear})
       : super(key: key);
 
   @override
@@ -25,8 +29,9 @@ class _ToolbarState extends State<Toolbar> {
   @override
   void initState() {
     super.initState();
+
     _nominatim.onSearch = (List<SearchResult> data) {
-      print('onSearch $data');
+      print("onSearch:  $data");
       setState(() {
         _items = data;
       });
@@ -70,16 +75,19 @@ class _ToolbarState extends State<Toolbar> {
       child: Column(
         children: <Widget>[
           CupertinoTextField(
-              controller: _textEditingController,
-              placeholder: "Buscar lugar o establecimiento ...",
-              onChanged: _onChanged,
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 15),
-              style: TextStyle(color: Colors.black54, letterSpacing: 1),
-              decoration: BoxDecoration(color: Color(0xfff0f0f0)),
-              suffix: isNotEmpty
-                  ? CupertinoButton(onPressed: _clear, child: Icon(Icons.clear))
-                  : null,
-            ),
+            controller: _textEditingController,
+            placeholder: "Buscar lugar o establecimiento...",
+            onChanged: _onChanged,
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+            style: TextStyle(color: Colors.black54, letterSpacing: 1),
+            decoration: BoxDecoration(color: Color(0xfff0f0f0)),
+            suffix: isNotEmpty
+                ? CupertinoButton(
+                    onPressed: _clear,
+                    child: Icon(Icons.clear),
+                  )
+                : null,
+          ),
           SizedBox(
             height: 10,
           ),
@@ -100,7 +108,8 @@ class _ToolbarState extends State<Toolbar> {
                               },
                               child: Text(
                                 item.displayName,
-                                style: TextStyle(color: Colors.black54, fontSize: 15),
+                                style: TextStyle(
+                                    color: Colors.black54, fontSize: 15),
                               ),
                               padding: EdgeInsets.symmetric(vertical: 15),
                             ),
@@ -112,7 +121,6 @@ class _ToolbarState extends State<Toolbar> {
                         );
                       },
                     ),
-                    
                   ),
                 )
               : Container()

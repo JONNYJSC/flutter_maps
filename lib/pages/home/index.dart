@@ -4,11 +4,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_maps/api/nominatim.dart';
+import 'package:flutter_maps/api/osrm.dart';
 import 'package:flutter_maps/models/reverse_result.dart';
 import 'package:flutter_maps/models/search_result.dart';
 import 'package:flutter_maps/pages/home/map_utils.dart';
 import 'package:flutter_maps/pages/home/widgets/my_center_position.dart';
 import 'package:flutter_maps/pages/home/widgets/toolbar.dart';
+import 'package:flutter_maps/utils/geolocation_utils.dart';
 import 'dart:typed_data';
 import 'dart:math' as math;
 import 'package:geolocator/geolocator.dart';
@@ -22,16 +24,11 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   Nominatim _nominatim = Nominatim();
+  OSRM _osrm = OSRM();
 
   PanelController _panelController = PanelController();
   GoogleMapController _mapController;
-  // Uint8List _carPin;
-  // Marker _myMarker;
 
-  /*final CameraPosition _kGooglePlex = CameraPosition(
-    target: LatLng(12.163234, -86.278021),
-    zoom: 16.4746,
-  );*/
   CameraPosition _initialCameraPosition;
 
   StreamSubscription<Position> _positionStream;
@@ -43,10 +40,6 @@ class _HomePageState extends State<HomePage> {
   LatLng _centerposition, _myPosition;
   ReverseResult _reverseResult;
 
-  // List<LatLng> _myRoute = List();
-
-  // Position _lastPosition;
-
   @override
   void initState() {
     super.initState();
@@ -55,19 +48,31 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _reverseResult = result;
       });
-      //print(result.toString());
+      _osrm.route(_myPosition, _centerposition);
     };
-    /*_loadCardPin();*/
+    _osrm.onRoute = (int status, dynamic data) {
+      print('task $status');
+
+      if (status == 200) {
+        final routes = data['routes'] as List;
+        if (routes.length > 0) {
+          final encodedPolyline = routes[0]['geometry'] as String;
+          List<LatLng> points =
+              GeolocationUtils.decodeEncodedPolyline(encodedPolyline);
+
+          final polyline = Polyline(
+              polylineId: PolylineId('route'),
+              points: points,
+              width: 5,
+              color: Colors.cyan);
+          setState(() {
+            _polylines[polyline.polylineId] = polyline;
+          });
+        }
+      }
+    };
   }
 
-  //Mostrar imagen en marcador
-  /*_loadCardPin() async {
-    _carPin =
-        await MapUtils.loadPinFromAsset('assets/icons/car-pin.png', width: 60);
-    _startTracking();
-  }*/
-
-  //presicion mas alta posible (LocationAccuracy.high), cada 5 metros notificar cambios de ubicacion(distanceFilter: 5)
   _startTracking() {
     final geolocator = Geolocator();
     final locationOptions =
@@ -88,47 +93,9 @@ class _HomePageState extends State<HomePage> {
           _initialCameraPosition = CameraPosition(target: myposition, zoom: 14);
         });
       }
-
-      /*_myRoute.add(myposition);
-
-      final myPolyline = Polyline(
-          polylineId: PolylineId('me'),
-          points: _myRoute,
-          color: Colors.cyanAccent,
-          width: 8);
-
-      if (_myMarker == null) {
-        final markerId = MarkerId('me');
-        final bitmap = BitmapDescriptor.fromBytes(_carPin);
-        _myMarker = Marker(
-            markerId: markerId,
-            position: myposition,
-            icon: bitmap,
-            rotation: 0,
-            anchor: Offset(0.5, 0.5));
-      } else {
-        final rotation = _getMyBearing(_lastPosition, position);
-        _myMarker = _myMarker.copyWith(
-            positionParam: myposition, rotationParam: rotation);
-      }
-      setState(() {
-        _markers[_myMarker.markerId] = _myMarker;
-        _polylines[myPolyline.polylineId] = myPolyline;
-      });
-      _lastPosition = position;
-      _move(position);*/
     }
   }
 
-  /*double _getMyBearing(Position lastPosition, Position currentPosition) {
-    final dx = math.cos(math.pi / 180 * lastPosition.latitude) *
-        (currentPosition.longitude - lastPosition.longitude);
-    final dy = currentPosition.latitude - lastPosition.latitude;
-    final angle = math.atan2(dy, dx);
-    return 90 - angle * 180 / math.pi;
-  }*/
-
-  //libera los recursos del cel
   @override
   void dispose() {
     if (_positionStream != null) {
@@ -139,16 +106,10 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  //Actualizacion de ubicacion en movimiento
   _moveCamera(LatLng position, {double zoom = 12}) {
     final cameraUpdate = CameraUpdate.newLatLngZoom(position, zoom);
     _mapController.animateCamera(cameraUpdate);
   }
-
-  /*_updateMarkerPosition(MarkerId markerId, LatLng p) {
-    print('newPosition');
-    _markers[markerId] = _markers[markerId].copyWith(positionParam: p);
-  }*/
 
   _onMarkerTap(String id) {
     showDialog(
@@ -167,25 +128,9 @@ class _HomePageState extends State<HomePage> {
         });
   }
 
-  //Mostrando marcador
-  /*_onTap(LatLng p) {
-    final id = '${_markers.length}';
-    final markerId = MarkerId(id);
-    final marker = Marker(
-        markerId: markerId,
-        position: p,
-        draggable: true,
-        onTap: () => _onMarkerTap(id),
-        onDragEnd: (np) => _updateMarkerPosition(markerId, np));
-    setState(() {
-      _markers[markerId] = marker;
-    });
-  }*/
-
   _onCameraMoveStarted() {
     print('Move Started');
     setState(() {
-      // _isCameraMoving = true;
       _reverseResult = null;
     });
   }
@@ -199,9 +144,6 @@ class _HomePageState extends State<HomePage> {
   _onCameraIdle() {
     print('Move fnished');
     _nominatim.reverse(_centerposition);
-    // setState(() {
-    //   _isCameraMoving = false;
-    // });
   }
 
   _onSearch(SearchResult result) {
@@ -268,7 +210,6 @@ class _HomePageState extends State<HomePage> {
                             initialCameraPosition: _initialCameraPosition,
                             myLocationButtonEnabled: false,
                             myLocationEnabled: true,
-                            // onTap: _onTap,
                             markers: Set.of(_markers.values),
                             polylines: Set.of(_polylines.values),
                             polygons: Set.of(_polygons.values),
@@ -277,8 +218,6 @@ class _HomePageState extends State<HomePage> {
                             onCameraIdle: _onCameraIdle,
                             onMapCreated: (GoogleMapController controller) {
                               _mapController = controller;
-                              // _mapController
-                              //     .setMapStyle(jsonEncode(mapStyle));
                             },
                           ),
                           MyCenterPosition(
@@ -297,7 +236,7 @@ class _HomePageState extends State<HomePage> {
                               onSearch: _onSearch,
                               onGoMyPosition: _onGoMyPosition,
                               containerHeight: slidingUpPanelHeight,
-                              onClear: (){
+                              onClear: () {
                                 _panelController.close();
                               },
                             )
