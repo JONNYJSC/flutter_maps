@@ -37,8 +37,9 @@ class _HomePageState extends State<HomePage> {
   Map<PolygonId, Polygon> _polygons = Map();
 
   var _isPanelOpen = false;
-  LatLng _centerposition, _myPosition;
+  LatLng _centerPosition, _myPosition;
   ReverseResult _reverseResult;
+  var _init = false, _isIdEnabled = true;
 
   @override
   void initState() {
@@ -48,29 +49,42 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _reverseResult = result;
       });
-      _osrm.route(_myPosition, _centerposition);
-    };
-    _osrm.onRoute = (int status, dynamic data) {
-      print('task $status');
-
-      if (status == 200) {
-        final routes = data['routes'] as List;
-        if (routes.length > 0) {
-          final encodedPolyline = routes[0]['geometry'] as String;
-          List<LatLng> points =
-              GeolocationUtils.decodeEncodedPolyline(encodedPolyline);
-
-          final polyline = Polyline(
-              polylineId: PolylineId('route'),
-              points: points,
-              width: 5,
-              color: Colors.cyan);
-          setState(() {
-            _polylines[polyline.polylineId] = polyline;
-          });
-        }
+      if (_init) {
+        _osrm.route(_myPosition, _centerPosition);
       }
+      _init = true;
     };
+    _osrm.onRoute = _onRoute;
+  }
+
+  _onRoute(int status, dynamic data) {
+    print('task $status');
+
+    if (status == 200) {
+      final routes = data['routes'] as List;
+      if (routes.length > 0) {
+        final encodedPolyline = routes[0]['geometry'] as String;
+        List<LatLng> points =
+            GeolocationUtils.decodeEncodedPolyline(encodedPolyline);
+
+        final fitData = GeolocationUtils.fitToCoordinates(points);
+        final center =
+            LatLng(fitData['center']['lat'], fitData['center']['lng']);
+        //final zoom = fitData['zoom'] as double;
+
+        _isIdEnabled = false;
+        _moveCamera(center);
+
+        final polyline = Polyline(
+            polylineId: PolylineId('route'),
+            points: points,
+            width: 5,
+            color: Colors.cyan);
+        setState(() {
+          _polylines[polyline.polylineId] = polyline;
+        });
+      }
+    }
   }
 
   _startTracking() {
@@ -138,12 +152,15 @@ class _HomePageState extends State<HomePage> {
   _onCameraMove(CameraPosition cameraPosition) {
     print(
         'Moving ${cameraPosition.target.latitude},${cameraPosition.target.longitude}');
-    _centerposition = cameraPosition.target;
+    _centerPosition = cameraPosition.target;
   }
 
   _onCameraIdle() {
     print('Move fnished');
-    _nominatim.reverse(_centerposition);
+    if (_isIdEnabled) {
+      _nominatim.reverse(_centerPosition);
+    }
+    _isIdEnabled = true;
   }
 
   _onSearch(SearchResult result) {
