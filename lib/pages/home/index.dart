@@ -60,15 +60,17 @@ class _HomePageState extends State<HomePage> {
           ServiceLocation(_centerPosition, result.displayName);
       if (_reverseType == ReverseType.origin) {
         _origin = serviceLocation;
-        _markers[_originMarker.markerId] =
-            _originMarker.copyWith(positionParam: _origin.position);
+        _markers[_originMarker.markerId] = _originMarker.copyWith(
+            positionParam: _origin.position,
+            onTapParam: () => _onServiceMarkerPressed(ReverseType.origin));
         if (_destination == null) {
           _reverseType = ReverseType.destination;
         }
       } else {
         _destination = serviceLocation;
-        _markers[_destinationMarker.markerId] =
-            _destinationMarker.copyWith(positionParam: _destination.position);
+        _markers[_destinationMarker.markerId] = _destinationMarker.copyWith(
+            positionParam: _destination.position,
+            onTapParam: () => _onServiceMarkerPressed(ReverseType.destination));
       }
       setState(() {});
       if (_origin != null && _destination != null) {
@@ -76,6 +78,37 @@ class _HomePageState extends State<HomePage> {
       }
     };
     _osrm.onRoute = _onRoute;
+  }
+
+  _onServiceMarkerPressed(ReverseType reverseType) {
+    showCupertinoDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return CupertinoAlertDialog(
+            title: Text('Confirmación Requerida'),
+            content: Text(
+                'Desea cambiar el ${reverseType == ReverseType.origin ? 'origen' : 'destino'} del servicio'),
+            actions: <Widget>[
+              CupertinoDialogAction(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text('No')),
+              CupertinoDialogAction(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    if (reverseType == ReverseType.origin) {
+                      _origin = null;
+                    } else {
+                      _destination = null;
+                    }
+                    _reverseType = reverseType;
+                    setState(() {});
+                  },
+                  child: Text('Si')),
+            ],
+          );
+        });
   }
 
   _onRoute(int status, dynamic data) {
