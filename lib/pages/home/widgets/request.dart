@@ -14,12 +14,12 @@ class Request extends StatelessWidget {
 
   int _getDurationInMinutes() {
     final seconds = double.parse(route['duration'].toString());
-    return (seconds/60).floor();
+    return (seconds / 60).floor();
   }
 
   int _getDistanceInKm() {
     final meters = double.parse(route['distance'].toString());
-    return (meters/1000).floor();
+    return (meters / 1000).floor();
   }
 
   @override
