@@ -81,24 +81,24 @@ class _HomePageState extends State<HomePage> {
     _osrm.onRoute = _onRoute;
   }
 
-  _drawOriginAndDestinationMarkers() {
-    Timer(Duration(milliseconds: 500), () async {
-      final originBytes = await MapUtils.widgetToBytes(_originkey);
-      final destinationBytes = await MapUtils.widgetToBytes(_destinationkey);
+  _drawOriginAndDestinationMarkers() async {
+    final originBytes =
+        await MapUtils.customMarkerToBytes(Colors.green, _origin.address);
+    final destinationBytes = await MapUtils.customMarkerToBytes(
+        Colors.redAccent, _destination.address);
 
-      setState(() {
-        _markers[_originMarker.markerId] = _originMarker.copyWith(
-            positionParam: _origin.position,
-            anchorParam: Offset(1, 1.3),
-            iconParam: BitmapDescriptor.fromBytes(originBytes),
-            onTapParam: () => _onServiceMarkerPressed(ReverseType.origin));
+    setState(() {
+      _markers[_originMarker.markerId] = _originMarker.copyWith(
+          positionParam: _origin.position,
+          anchorParam: Offset(1, 1.3),
+          iconParam: BitmapDescriptor.fromBytes(originBytes),
+          onTapParam: () => _onServiceMarkerPressed(ReverseType.origin));
 
-        _markers[_destinationMarker.markerId] = _destinationMarker.copyWith(
-            positionParam: _destination.position,
-            anchorParam: Offset(-0.1, 1.3),
-            iconParam: BitmapDescriptor.fromBytes(destinationBytes),
-            onTapParam: () => _onServiceMarkerPressed(ReverseType.destination));
-      });
+      _markers[_destinationMarker.markerId] = _destinationMarker.copyWith(
+          positionParam: _destination.position,
+          anchorParam: Offset(-0.1, 1.3),
+          iconParam: BitmapDescriptor.fromBytes(destinationBytes),
+          onTapParam: () => _onServiceMarkerPressed(ReverseType.destination));
     });
   }
 
@@ -373,17 +373,18 @@ class _HomePageState extends State<HomePage> {
                                   : '',
                               repaintKey: _destinationkey),
                           Positioned(
-                            top: 20,
-                            right: 20,
+                              top: 20,
+                              right: 20,
                               child: CupertinoButton(
                                 color: Colors.white,
                                 onPressed: _onGoMyPosition,
                                 borderRadius: BorderRadius.circular(30),
                                 padding: EdgeInsets.all(5),
-                                  child: Icon(
-                                    Icons.gps_fixed,
-                                    color: Colors.black,
-                                  ),))
+                                child: Icon(
+                                  Icons.gps_fixed,
+                                  color: Colors.black,
+                                ),
+                              ))
                         ],
                       );
                     },
