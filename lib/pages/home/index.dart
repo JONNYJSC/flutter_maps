@@ -133,7 +133,7 @@ class _HomePageState extends State<HomePage> {
         });
   }
 
-  _onRoute(int status, dynamic data) {
+  _onRoute(int status, dynamic data) async {
     // print('task $status');
 
     if (status == 200) {
@@ -156,7 +156,29 @@ class _HomePageState extends State<HomePage> {
             points: points,
             width: 5,
             color: Colors.cyan);
+
+        final startBytes = await MapUtils.loadPinFromAsset(
+            'assets/icons/green-circle.png',
+            width: 55);
+        final endBytes = await MapUtils.loadPinFromAsset(
+            'assets/icons/red-circle.png',
+            width: 55);
+
+        final startPoint = Marker(
+            markerId: MarkerId('start-point'),
+            position: points[0],
+            anchor: Offset(0.5, 0.5),
+            icon: BitmapDescriptor.fromBytes(startBytes));
+
+        final endPoint = Marker(
+            markerId: MarkerId('end-point'),
+            position: points[points.length - 1],
+            anchor: Offset(0.5, 0.5),
+            icon: BitmapDescriptor.fromBytes(endBytes));
+
         setState(() {
+          _markers[startPoint.markerId] = startPoint;
+          _markers[endPoint.markerId] = endPoint;
           _polylines[polyline.polylineId] = polyline;
         });
       } else {
@@ -350,6 +372,18 @@ class _HomePageState extends State<HomePage> {
                                   ? _destination.address
                                   : '',
                               repaintKey: _destinationkey),
+                          Positioned(
+                            top: 20,
+                            right: 20,
+                              child: CupertinoButton(
+                                color: Colors.white,
+                                onPressed: _onGoMyPosition,
+                                borderRadius: BorderRadius.circular(30),
+                                padding: EdgeInsets.all(5),
+                                  child: Icon(
+                                    Icons.gps_fixed,
+                                    color: Colors.black,
+                                  ),))
                         ],
                       );
                     },
