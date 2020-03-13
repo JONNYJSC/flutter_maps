@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
+// import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -12,10 +12,11 @@ import 'package:flutter_maps/pages/home/map_utils.dart';
 import 'package:flutter_maps/pages/home/widgets/my_center_position.dart';
 import 'package:flutter_maps/pages/home/widgets/request.dart';
 import 'package:flutter_maps/pages/home/widgets/toolbar.dart';
+import 'package:flutter_maps/pages/home/widgets/widget_as_marker.dart';
 import 'package:flutter_maps/utils/dialogs.dart';
 import 'package:flutter_maps/utils/geolocation_utils.dart';
-import 'dart:typed_data';
-import 'dart:math' as math;
+// import 'dart:typed_data';
+// import 'dart:math' as math;
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
@@ -28,6 +29,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final GlobalKey _originkey = GlobalKey(), _destinationkey = GlobalKey();
   ServiceLocation _origin, _destination;
   Marker _originMarker = Marker(markerId: MarkerId('origin'));
   Marker _destinationMarker = Marker(markerId: MarkerId('destination'));
@@ -55,7 +57,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _startTracking();
-    _nominatim.onReverse = (ReverseResult result) {
+    _nominatim.onReverse = (ReverseResult result) async {
       setState(() {
         _reverseResult = result;
       });
@@ -63,24 +65,41 @@ class _HomePageState extends State<HomePage> {
           ServiceLocation(_centerPosition, result.displayName);
       if (_reverseType == ReverseType.origin) {
         _origin = serviceLocation;
-        _markers[_originMarker.markerId] = _originMarker.copyWith(
-            positionParam: _origin.position,
-            onTapParam: () => _onServiceMarkerPressed(ReverseType.origin));
+
         if (_destination == null) {
           _reverseType = ReverseType.destination;
         }
       } else {
         _destination = serviceLocation;
-        _markers[_destinationMarker.markerId] = _destinationMarker.copyWith(
-            positionParam: _destination.position,
-            onTapParam: () => _onServiceMarkerPressed(ReverseType.destination));
       }
       setState(() {});
       if (_origin != null && _destination != null) {
+        _drawOriginAndDestinationMarkers();
         _osrm.route(_origin.position, _destination.position);
       }
     };
     _osrm.onRoute = _onRoute;
+  }
+
+  _drawOriginAndDestinationMarkers() {
+    Timer(Duration(milliseconds: 500), () async {
+      final originBytes = await MapUtils.widgetToBytes(_originkey);
+      final destinationBytes = await MapUtils.widgetToBytes(_destinationkey);
+
+      setState(() {
+        _markers[_originMarker.markerId] = _originMarker.copyWith(
+            positionParam: _origin.position,
+            anchorParam: Offset(1, 1.3),
+            iconParam: BitmapDescriptor.fromBytes(originBytes),
+            onTapParam: () => _onServiceMarkerPressed(ReverseType.origin));
+
+        _markers[_destinationMarker.markerId] = _destinationMarker.copyWith(
+            positionParam: _destination.position,
+            anchorParam: Offset(-0.1, 1.3),
+            iconParam: BitmapDescriptor.fromBytes(destinationBytes),
+            onTapParam: () => _onServiceMarkerPressed(ReverseType.destination));
+      });
+    });
   }
 
   _onServiceMarkerPressed(ReverseType reverseType) {
@@ -115,7 +134,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   _onRoute(int status, dynamic data) {
-    print('task $status');
+    // print('task $status');
 
     if (status == 200) {
       final routes = data['routes'] as List;
@@ -128,9 +147,9 @@ class _HomePageState extends State<HomePage> {
         final fitData = GeolocationUtils.fitToCoordinates(points);
         final center =
             LatLng(fitData['center']['lat'], fitData['center']['lng']);
-        //final zoom = fitData['zoom'] as double;
+        final zoom = fitData['center']['zoom'] as double;
 
-        _moveCamera(center);
+        _moveCamera(center, zoom: zoom);
 
         final polyline = Polyline(
             polylineId: PolylineId('route'),
@@ -321,6 +340,16 @@ class _HomePageState extends State<HomePage> {
                                   containerHeight: constrains.maxHeight,
                                 )
                               : Container(),
+                          WidgetAsMarker(
+                              dotColor: Colors.green,
+                              text: _origin != null ? _origin.address : '',
+                              repaintKey: _originkey),
+                          WidgetAsMarker(
+                              dotColor: Colors.redAccent,
+                              text: _destination != null
+                                  ? _destination.address
+                                  : '',
+                              repaintKey: _destinationkey),
                         ],
                       );
                     },
